@@ -22,6 +22,8 @@
 		{ A: 2, B: 2, C: 1, target: true, },
 	];
 
+	var attribute_list = get_attribute_list(input);
+	console.log('attribute_list:', attribute_list);
 
 	var root_node = build_tree(input);
 	print_tree(root_node);
@@ -30,8 +32,6 @@
 
 	function build_tree(data) {
 		let attr = get_best_attribute(data);
-
-		// Tem atributos que podem segmentar os dados?
 		if(attr) {
 			/* Dados ainda podem ser segmentados */
 
@@ -103,6 +103,49 @@
 	}
 
 	function get_best_attribute(data) {
+
+		console.log('--------------------------------');
+
+		/* Para cada atributo conta a quantidade de cada classe
+		 * agrupadas pelo seu valor para cada valor do atributo. 
+		 * Resultado em 'attrs':
+		 * [attr1: { 
+		    	valor1: { classe_1: <qtd>, classe_2: <qtd> }, 
+		    	valor2: { classe_1: <qtd> }
+	   		}, 
+			attr2: { .. }, ...]
+		 */
+		let attrs = {}; 		
+		for(let attr of attribute_list) {
+			
+			// Agrupa instâncias pelo valor do atributo
+			let values = {};
+			for(let i = 0; i < data.length; i++) {
+				let value = data[i][attr];
+				if(values[value] === undefined) {
+					values[value] = [];
+				}
+				values[value].push(data[i].target);
+			}
+
+			// Conta a ocorrência de cada classe para cada valor
+			for(let i in values) {
+				let count_values = {};
+				for(let j = 0; j < values[i].length; j++) {
+					let class_value = values[i][j];
+					if(count_values[class_value] === undefined) {
+						count_values[class_value] = 0;
+					}
+					count_values[class_value]++;
+				}
+				values[i] = count_values;
+			}
+
+			attrs[attr] = values;
+		}
+		console.log('attrs', attrs);
+		console.log('--------------------------------');
+
 		count++;
 		if(count > 3) return null;
 		if(count == 1 ) return 'B';
@@ -119,6 +162,22 @@
 				aaa--;
 			}
 		}
+	}
+
+	/* Monta lista com os atributos que ocorrem em pelo
+	 * menos uma instância */
+	function get_attribute_list(data) {
+		let attrs = [];
+		for(let i = 0; i < data.length; i++) {
+			for(let attr in data[i]) {
+				if(attr !== 'target' && data[i].hasOwnProperty(attr)){
+					if(attrs.indexOf(attr) === -1) {
+						attrs.push(attr);
+					}
+				}
+			} 
+		}
+		return attrs;
 	}
 
 })()
