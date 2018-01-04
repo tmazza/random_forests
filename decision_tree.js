@@ -7,25 +7,21 @@
 
 
 	var input = [
-		// attr1: 50-50
-		// attr2: 60-40
-		// attr3: 50-50
 		{ A: 1, B: 1, C: 1, target: true, },
-		{ A: 2, B: 1, C: 1, target: true, },
+		{ A: 1, B: 1, C: 2, target: false, },
 		{ A: 1, B: 1, C: 1, target: false, },
-		{ A: 2, B: 1, C: 1, target: true, },
-		{ A: 1, B: 1, C: 1, target: false, },
-		{ A: 2, B: 1, C: 1, target: true, },
-		{ A: 1, B: 2, C: 1, target: true, },
-		{ A: 2, B: 2, C: 1, target: true, },
-		{ A: 1, B: 2, C: 1, target: true, },
-		{ A: 2, B: 2, C: 1, target: true, },
+		{ A: 1, B: 2, C: 2, target: true, },
+		{ A: 1, B: 2, C: 2, target: false, },
+		{ A: 2, B: 1, C: 1, target: false, },
+		{ A: 2, B: 1, C: 1, target: false, },
+		{ A: 2, B: 1, C: 3, target: true, },
+		{ A: 2, B: 2, C: 3, target: true, },
+		{ A: 2, B: 2, C: 3, target: true, },
 	];
 
 	var attribute_list = get_attribute_list(input);
-	console.log('attribute_list:', attribute_list);
-
 	var root_node = build_tree(input);
+		
 	print_tree(root_node);
 
 	///// 
@@ -40,10 +36,7 @@
 			    return self.indexOf(value) === index;
 			}).length;
 
-			if(distinct_class === 0) {
-				/* ??? */
-				return '???';
-			} else if(distinct_class === 1) {
+			if(distinct_class === 1) {
 				/* "conjunto puro" */
 				return data[0].target;
 			} else {
@@ -103,18 +96,93 @@
 	}
 
 	function get_best_attribute(data) {
+		let InfoD = get_data_entropy(data);
+		let attrs = group_attributes_by_class(data);
+		attrs = get_attributes_entropy(attrs, data.length);
+		let max_gain = 0;
+		let max_attr = null;
+		for(let a in attrs) {
+			let gain = InfoD - attrs[a];
+			if(gain > max_gain) {
+				max_attr = a;
+				max_gain = gain;
+			}
+		}
+		return max_attr;
+	}
 
-		console.log('--------------------------------');
+	function print_tree(node) {
+		console.log(("_").repeat(aaa*2), node);
+		aaa++;
+		if(node && node.children) {
+			for(let i in node.children) {
+				print_tree(node.children[i]);
+				aaa--;
+			}
+		}
+	}
 
-		/* Para cada atributo conta a quantidade de cada classe
-		 * agrupadas pelo seu valor para cada valor do atributo. 
-		 * Resultado em 'attrs':
-		 * [attr1: { 
-		    	valor1: { classe_1: <qtd>, classe_2: <qtd> }, 
-		    	valor2: { classe_1: <qtd> }
-	   		}, 
-			attr2: { .. }, ...]
-		 */
+	/* Info(D) */
+	function get_data_entropy(data) {
+		// Conta ocorrências de cada classe
+		let class_count = {};
+		for(let i = 0; i < data.length; i++) {
+			let class_value = data[i].target;
+			if(class_count[class_value] === undefined) {
+				class_count[class_value] = 0;
+			}
+			class_count[class_value]++;
+		}
+		// Calcula InfoD
+		let data_count = data.length;
+		let InfoD = 0;
+		for(let c in class_count) {
+			let pi = class_count[c] / data_count;
+			InfoD += pi * Math.log2(pi);
+		}
+		return InfoD * -1;
+	}
+
+	/* Calcula entropia de cada atributo 
+	 * Ver slide 54 aula 4 */
+	function get_attributes_entropy(attrs, data_count) {
+		for(let a in attrs) {
+			let values = attrs[a];
+
+			let atributte_value = 0;
+			for(let v in values) {
+
+				let class_count = values[v];
+				let value_count = 0; // Ocorrências desse valor no atributo
+				for(let c in class_count) {
+					value_count += class_count[c];
+				}
+
+				let base = value_count / data_count;
+				let sum_class_info = 0;
+				for(let c in class_count) {
+					let prob = class_count[c] / value_count;
+					sum_class_info += prob * Math.log2(prob);
+				}
+				atributte_value += base * -sum_class_info;
+			}
+			// Sobrescreve com valor de cada atributo
+			attrs[a] = atributte_value;
+		}
+		return attrs;
+	}
+
+	/* (aux)Para cada atributo conta a quantidade de cada classe
+	 * agrupadas pelo seu valor para cada valor do atributo. 
+	 * Resultado em 'attrs':
+	 * [attr1: { 
+	    	valor1: { classe_1: <qtd>, classe_2: <qtd> }, 
+	    	valor2: { classe_1: <qtd> }
+   		}, 
+		attr2: { .. }, ...]
+	 */
+	function group_attributes_by_class(data) {
+		let data_count = data.length;
 		let attrs = {}; 		
 		for(let attr of attribute_list) {
 			
@@ -143,25 +211,7 @@
 
 			attrs[attr] = values;
 		}
-		console.log('attrs', attrs);
-		console.log('--------------------------------');
-
-		count++;
-		if(count > 3) return null;
-		if(count == 1 ) return 'B';
-		if(count == 2 ) return 'C';
-		if(count == 3 ) return 'A';
-	}
-
-	function print_tree(node) {
-		console.log(("_").repeat(aaa), node);
-		aaa++;
-		if(node && node.children) {
-			for(let i in node.children) {
-				print_tree(node.children[i]);
-				aaa--;
-			}
-		}
+		return attrs;
 	}
 
 	/* Monta lista com os atributos que ocorrem em pelo
