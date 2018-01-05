@@ -1,32 +1,23 @@
-/** Gera uma árvode de decisão selecionando
-  * como raiz o atributo que obtem o melhor
-  * ganho de informação. */
-(function(){
-	var count = 0; // TEMP simulação de seleção de atributo
-	var aaa = 0;
+/** Para uma lista de instâncias (discretizadas) gera uma árvore 
+  * de decisão selecionando, a cada iteração, o atributo que obtem 
+  * o melhor  ganho de informação. O atributo 'target' será tratado 
+  * como a classe da instância. */
+module.exports = (function(){
 
-
-	var input = [
-		{ A: 1, B: 1, C: 1, target: true, },
-		{ A: 1, B: 1, C: 2, target: false, },
-		{ A: 1, B: 1, C: 1, target: false, },
-		{ A: 1, B: 2, C: 2, target: true, },
-		{ A: 1, B: 2, C: 2, target: false, },
-		{ A: 2, B: 1, C: 1, target: false, },
-		{ A: 2, B: 1, C: 1, target: false, },
-		{ A: 2, B: 1, C: 3, target: true, },
-		{ A: 2, B: 2, C: 3, target: true, },
-		{ A: 2, B: 2, C: 3, target: true, },
-	];
-
-	var attribute_list = get_attribute_list(input);
-	var root_node = build_tree(input);
-		
-	print_tree(root_node);
+	var enable_debug = false; // Mostra ganho de informação para nodo selecionado
+	var attribute_list = [];
+	
+	return {
+		build: build_tree,
+		print: print_tree,
+		evaluate: evaluate,
+		set_debug: set_debug,
+	};
 
 	///// 
 
 	function build_tree(data) {
+		attribute_list = get_attribute_list(data);
 		let attr = get_best_attribute(data);
 		if(attr) {
 			/* Dados ainda podem ser segmentados */
@@ -58,9 +49,7 @@
 				// Cria/processa nodos filhos
 				for(let value in children_data) {
 					if(children_data.hasOwnProperty(value)) {
-						// console.log("_".repeat(count-1) + node.attr, value, children_data[value].length)
 						node.children[value] = build_tree(children_data[value]);
-						count--;
 					}
 				}
 
@@ -108,18 +97,10 @@
 				max_gain = gain;
 			}
 		}
-		return max_attr;
-	}
-
-	function print_tree(node) {
-		console.log(("_").repeat(aaa*2), node);
-		aaa++;
-		if(node && node.children) {
-			for(let i in node.children) {
-				print_tree(node.children[i]);
-				aaa--;
-			}
+		if(enable_debug && max_attr){
+			console.log('Seleção de', "'"+max_attr+"'", 'com ganho:', max_gain.toFixed(3));
 		}
+		return max_attr;
 	}
 
 	/* Info(D) */
@@ -183,7 +164,7 @@
 	 */
 	function group_attributes_by_class(data) {
 		let data_count = data.length;
-		let attrs = {}; 		
+		let attrs = {};
 		for(let attr of attribute_list) {
 			
 			// Agrupa instâncias pelo valor do atributo
@@ -229,5 +210,56 @@
 		}
 		return attrs;
 	}
+
+	function print_tree(node, column_spacer = "\t") {
+
+		let print_node = function(node, deep, from) {
+			let output = '';
+
+			if(node && node.children) {
+				output += (column_spacer).repeat(deep) + from + ' -> ' + node.attr + "\n";
+				for(let i in node.children) {
+					output += print_node(node.children[i], deep+=1, i);
+					deep--;
+				}
+			} else {
+				output += (column_spacer).repeat(deep) + from + ' -> ' + node + "\n";
+			}
+
+			return output;
+		};
+
+		return print_node(node, 0, '');
+	}
+
+	/* Percorre árvore e classifica uma instância
+	 * */
+	function evaluate(node, instance) {
+		if(node.attr === undefined) {
+			/* nodo folha */
+			return node;
+		} else {
+			/* nodo raiz ou intermediário */
+			let value = instance[node.attr] || undefined;
+			if(value === undefined) {
+				console.log('*** TODO: instancia', instance, 'não tem attr', node.attr);
+				return '???';
+			} else {
+				let next_node = node['children'][value] || undefined;
+				if(next_node === undefined) {
+					console.log('*** TODO: instancia node nao tem filho com valor da instancia', value);
+					return '***';
+				} else {
+					return evaluate(next_node, instance);
+				}
+			}
+
+		}
+	}
+
+	function set_debug(bool) {
+		enable_debug = bool;
+	}
+
 
 })()
