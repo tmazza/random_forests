@@ -77,10 +77,12 @@ module.exports = (function(){
 	function haberman_dataset(dataset) {
 		let attribute_target = 'survival';
 		let attribute_list = ['age', 'year', 'nodes', attribute_target];
+		let attribute_continuous = ['age', 'year', 'nodes'];
 
 		return read_file(dataset.filename).then(function(data) {
 			let lines = data.split("\n").map(l => l.split(','));
-			return make_instances(attribute_target, attribute_list, lines);
+			let instances = make_instances(attribute_target, attribute_list, lines);
+			return discretization(attribute_continuous, instances);
 		});
 	}
 
@@ -114,6 +116,66 @@ module.exports = (function(){
 				instance[attr_name] = lines[i][j];
 			}
 			instances.push(instance);
+		}
+		return instances;
+	}
+
+	function discretization(attribute_continuous, instances) {
+		// ----------
+		for(let attr of attribute_continuous) {
+			// Busca conjunto de valores de um atributo do dataset "pega uma coluna" do dataset
+			attr_values = [];
+			for(let i of instances) {
+				attr_values.push(Number(i[attr]));
+			}
+			attr_values.sort((a,b) => a-b)
+			attr_values = attr_values.filter(function onlyUnique(value, index, self) { 
+			    return self.indexOf(value) === index;
+			});
+
+			let distinct_values = attr_values.length;
+			if(distinct_values > 5) {
+				// Usa sqrt(qtd. valores distintos) como pontos de corte
+				let thresholds = Math.round(Math.sqrt(distinct_values));
+				let index_step = Math.round(attr_values.length/thresholds);
+
+				// Gera pontos de corte
+				let attr_rules = [];
+				for(let i = index_step; i < distinct_values-1; i+=index_step) {
+					let rule = {};
+					if(i === index_step) {
+						rule['label'] = '<' + attr_values[i];
+						rule['test'] = (function(v1){
+							return function(v) { return v < v1; }
+						})(attr_values[i]);
+					} else {
+						rule['label'] = attr_values[i-index_step] + '-' + attr_values[i];
+						rule['test'] = (function(v1, v2){
+							return function(v) { return v >= v1 && v <= v2; }
+						})(attr_values[i-index_step], attr_values[i]);
+					}
+					attr_rules.push(rule)
+				}
+				let last = attr_values[distinct_values-index_step-1];
+				attr_rules.push({
+					label: '>'+last,
+					test: (function(v1){
+						return function(v) { return v > v1; }
+					})(last)
+				})
+
+				// Altera valores das instancias baseado nos pontos de corte
+				for(let i in instances) {
+					let rule = attr_rules.find(r => {
+						return r.test(instances[i][attr]);
+					})
+					if(rule) {
+						instances[i][attr] = rule.label;
+					} else {
+						console.log('*****', 'sem classe???');
+					}
+				}
+			}
 		}
 		return instances;
 	}

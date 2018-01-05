@@ -217,13 +217,13 @@ module.exports = (function(){
 			let output = '';
 
 			if(node && node.children) {
-				output += (column_spacer).repeat(deep) + from + ' -> ' + node.attr + "\n";
+				output += (column_spacer).repeat(deep) + "'"+from+"'" + ' -> ' + node.attr + "\n";
 				for(let i in node.children) {
 					output += print_node(node.children[i], deep+=1, i);
 					deep--;
 				}
 			} else {
-				output += (column_spacer).repeat(deep) + from + ' -> ' + node + "\n";
+				output += (column_spacer).repeat(deep) + "'"+from+"'" + ' -> ' + node + "\n";
 			}
 
 			return output;
