@@ -13,7 +13,8 @@ data_provider.get_dataset('benchmark')
 		let root_node = decision_tree.build(instances);
 		
 		console.log('\n---  tree -------');
-		console.log(decision_tree.print(root_node, "\t"));
+		let output = decision_tree.print(root_node, "\t");
+		console.log(output);
 		
 		console.log('--- results -----');
 		for(let i = 0; i < instances.length; i++) {

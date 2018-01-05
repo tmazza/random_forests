@@ -1,3 +1,5 @@
+/* Demostração simples da geração e uso de uma árvore de
+ * decisão. (*Usado para valiação antes do benchmark). */
 const decision_tree = require('./src/decision_tree');
 
 var input = [
@@ -14,8 +16,8 @@ var input = [
 ];
 
 var root_node = decision_tree.build(input);
-decision_tree.print(root_node);
-
+let output = decision_tree.print(root_node);
+console.log(output);
 
 for(let i = 0; i < input.length; i++) {
 	let evalueted = decision_tree.evaluate(root_node, input[i]);
