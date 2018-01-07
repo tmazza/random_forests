@@ -16,72 +16,75 @@ module.exports = (function(){
 
 	///// 
 
-	function build_tree(data) {
-		attribute_list = get_attribute_list(data);
-		let attr = get_best_attribute(data);
-		if(attr) {
-			/* Dados ainda podem ser segmentados */
+	function build_tree(data, attributes) {
+		attribute_list = attributes ? attributes : get_attribute_list(data);
 
-			// Conta quantidade de classes distintas nos dados
-			let distinct_class = data.map(d => d.target).filter(function onlyUnique(value, index, self) { 
-			    return self.indexOf(value) === index;
-			}).length;
+		return (function build_node(data) {
+			let attr = get_best_attribute(data);
+			if(attr) {
+				/* Dados ainda podem ser segmentados */
 
-			if(distinct_class === 1) {
-				/* "conjunto puro" */
-				return data[0].target;
+				// Conta quantidade de classes distintas nos dados
+				let distinct_class = data.map(d => d.target).filter(function onlyUnique(value, index, self) { 
+				    return self.indexOf(value) === index;
+				}).length;
+
+				if(distinct_class === 1) {
+					/* "conjunto puro" */
+					return data[0].target;
+				} else {
+					/* Separar dados conforme valores do atributo selecionado. */
+					var node = {
+						attr: attr,
+						children: {},
+					}
+					// Agrupa dados por valor do atributo selecionado
+					var children_data = {};
+					for(let i = 0; i < data.length; i++) {
+						let value = data[i][node.attr];
+						if(children_data[value] === undefined) {
+							children_data[value] = [];
+						}
+						children_data[value].push(data[i]);
+					}
+
+					// Cria/processa nodos filhos
+					for(let value in children_data) {
+						if(children_data.hasOwnProperty(value)) {
+							node.children[value] = build_node(children_data[value]);
+						}
+					}
+
+					return node;
+
+				}
 			} else {
-				/* Separar dados conforme valores do atributo selecionado. */
-				var node = {
-					attr: attr,
-					children: {},
-				}
-				// Agrupa dados por valor do atributo selecionado
-				var children_data = {};
+				/* Dados não podem ser segmentados.
+				 * Usa classe mais frequente como representante do grupo. */
+
+				// Conta classes distintas nos dados
+				let class_count = {};
 				for(let i = 0; i < data.length; i++) {
-					let value = data[i][node.attr];
-					if(children_data[value] === undefined) {
-						children_data[value] = [];
+					if(class_count[data[i].target] === undefined) {
+						class_count[data[i].target] = 0;
 					}
-					children_data[value].push(data[i]);
+					class_count[data[i].target]++;
 				}
 
-				// Cria/processa nodos filhos
-				for(let value in children_data) {
-					if(children_data.hasOwnProperty(value)) {
-						node.children[value] = build_tree(children_data[value]);
-					}
-				}
-
-				return node;
-
-			}
-		} else {
-			/* Dados não podem ser segmentados.
-			 * Usa classe mais frequente como representante do grupo. */
-
-			// Conta classes distintas nos dados
-			let class_count = {};
-			for(let i = 0; i < data.length; i++) {
-				if(class_count[data[i].target] === undefined) {
-					class_count[data[i].target] = 0;
-				}
-				class_count[data[i].target]++;
-			}
-
-			// Seleciona mais frequente
-			let max = { value: 0 };
-			for(let i in class_count) {
-				if(class_count[i] >= max.value) {
-					max = {
-						class: i,
-						value: class_count[i],
+				// Seleciona mais frequente
+				let max = { value: 0 };
+				for(let i in class_count) {
+					if(class_count[i] >= max.value) {
+						max = {
+							class: i,
+							value: class_count[i],
+						}
 					}
 				}
+				
+				return max.class;	
 			}
-			
-			return max.class;	
-		}
+		})(data);
 	}
 
 	function get_best_attribute(data) {
