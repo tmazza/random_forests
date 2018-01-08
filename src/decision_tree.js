@@ -244,14 +244,24 @@ module.exports = (function(){
 		} else {
 			/* nodo raiz ou intermediário */
 			let value = instance[node.attr] || undefined;
-			if(value === undefined) {
-				console.log('*** TODO: instancia', instance, 'não tem attr', node.attr);
-				return '???';
+			if(value === undefined) { // Não ocorre em nenhum dataset sendo avaliado
+				console.log('ATENÇÃO: instancia', instance, 'não tem atributo', node.attr);
+				return '?';
 			} else {
 				let next_node = node['children'][value] || undefined;
 				if(next_node === undefined) {
-					console.log('*** TODO: instancia node nao tem filho com valor da instancia', value);
-					return '***';
+					// Pega mais frequente
+					let options = node['children'];
+					let max = null;
+					for(let o in node['children']) {
+						if(!max || node['children'][o] < node['children'][max]) {
+							max = o;
+						}
+					}
+					// Usa nó mais frequete para valor que não existia
+					node['children'][value] = node['children'][max];
+					next_node = node['children'][max];
+					return evaluate(next_node, instance);
 				} else {
 					return evaluate(next_node, instance);
 				}

@@ -22,7 +22,8 @@ module.exports = (function(){
 		let forests = [];
 		for(let i = 0; i < ntree; i++) {
 			let selected_attributes = random_select(attribute_list);
-			forests.push(decision_tree.build(instances, selected_attributes));	
+			let selected_dataset = bootstrap(instances);
+			forests.push(decision_tree.build(selected_dataset, selected_attributes));	
 		}
 
 		if(enable_debug) {
@@ -36,7 +37,7 @@ module.exports = (function(){
 	}
 
 	/* Monta lista com os atributos que ocorrem em pelo
-	 * menos uma instância | TODO: função duplicada em decision_tree */
+	 * menos uma instância | **função duplicada em decision_tree */
 	function get_attribute_list(data) {
 		let attrs = [];
 		for(let i = 0; i < data.length; i++) {
@@ -51,6 +52,9 @@ module.exports = (function(){
 		return attrs;
 	}
 
+	/* Seleciona m atributos. Sendo m a raiz quadrada da quantidade 
+	 * total de atributos no dataset
+	 */
 	function random_select(attribute_list) {
 		var attributes_to_select = Math.round(Math.sqrt(attribute_list.length));
 		var to_remove_count = attribute_list.length - attributes_to_select;
@@ -66,6 +70,19 @@ module.exports = (function(){
 		return attribute_list.filter((i) => {
 			return to_remove_list.indexOf(i) === -1;
 		});
+	}
+
+	/* Monta um subset com n instâncias selecionadas através
+	 * de amostragem com reposição.
+	 */
+	function bootstrap(instances) {
+		let selected = []; 
+		while(selected.length < instances.length){
+			let random_index = Math.floor(Math.random() * instances.length);
+			selected.push(instances[random_index]);	
+		}
+		// console.log(selected.length);
+		return selected;
 	}
 
 	function set_debug(bool) {

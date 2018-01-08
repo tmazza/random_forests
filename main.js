@@ -4,7 +4,7 @@ const random_forest = require('./src/random_forest'),
 // random_forest.set_debug(true);
 
 var ntrees_values = [2, 4, 8, 16, 32, 64, 128, 256, 512, 1024];
-// var ntrees_values = [2, 4, 8, 16];
+// var ntrees_values = [2,];
 
 let process_dataset = function(dataset_alias) {
 
