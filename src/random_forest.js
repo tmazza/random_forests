@@ -56,16 +56,15 @@ module.exports = (function(){
 	 * total de atributos no dataset
 	 */
 	function random_select(attribute_list) {
-		var attributes_to_select = Math.round(Math.sqrt(attribute_list.length));
-		var to_remove_count = attribute_list.length - attributes_to_select;
+		var local_attribute_list = attribute_list.slice();
+		var attributes_to_select = Math.round(Math.sqrt(local_attribute_list.length));
+		var to_remove_count = local_attribute_list.length - attributes_to_select;
 		var to_remove_list = [];
-		// TODO: refatorar!!
-		while(to_remove_list.length < to_remove_count) { // Complexidade cresce exponencialmente com o tamaho do array (TODO)
-			let random = Math.floor(Math.random() * attribute_list.length);
-			let selected = attribute_list[random];
-			if(to_remove_list.indexOf(selected) === -1) {
-				to_remove_list.push(selected);
-			}
+		while(to_remove_list.length < to_remove_count) {
+			let random = Math.floor(Math.random() * local_attribute_list.length);
+			let selected = local_attribute_list[random];
+			to_remove_list.push(selected);
+			local_attribute_list.splice(random, 1)
 		}
 		return attribute_list.filter((i) => {
 			return to_remove_list.indexOf(i) === -1;
