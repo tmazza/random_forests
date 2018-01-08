@@ -25,6 +25,7 @@ let process_dataset = function(dataset_alias) {
 let haberman = data_provider.get_dataset('haberman')
 let wine = data_provider.get_dataset('wine')
 let cmc = data_provider.get_dataset('cmc')
+let wpbc = data_provider.get_dataset('wpbc')
 	
 haberman
 	.then(process_dataset('haberman'))
@@ -32,3 +33,5 @@ haberman
 	.then(process_dataset('wine'))
 	.then(() => cmc)
 	.then(process_dataset('cmc'))
+	.then(() => wpbc)
+	.then(process_dataset('wpbc'))

@@ -420,7 +420,21 @@ module.exports = (function(){
 	* 
 	* 9. Class distribution: 357 benign, 212 malignant */
 	function wpbc_dataset(dataset) {
+		let attribute_target = 'diagnosis';
+		let attribute_relevant = Array.apply(null, {length: 30}).map(Number.call, Number);
+		let attribute_list = ['id', attribute_target].concat(attribute_relevant);
+		let attribute_continuous = attribute_relevant;
 
+		return read_file(dataset.filename).then(function(data) {
+			let lines = data.split("\n").map(l => l.split(','));
+			let instances = make_instances(attribute_target, attribute_list, lines);
+
+			for(let i of instances) {
+				delete i['id'];
+			}
+
+			return discretization(attribute_continuous, instances);
+		});
 	}
 
 	function get_dataset(dataset_id) {
