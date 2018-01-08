@@ -59,6 +59,9 @@ module.exports = (function(){
 		var local_attribute_list = attribute_list.slice();
 		var attributes_to_select = Math.round(Math.sqrt(local_attribute_list.length));
 		var to_remove_count = local_attribute_list.length - attributes_to_select;
+			
+		// to_remove_count = to_remove_count > 5 ? 5 : to_remove_count;
+
 		var to_remove_list = [];
 		while(to_remove_list.length < to_remove_count) {
 			let random = Math.floor(Math.random() * local_attribute_list.length);
