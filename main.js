@@ -21,6 +21,8 @@ let process_dataset = function(dataset_alias) {
 	}
 }
 
-data_provider
-	.get_dataset('haberman')
+data_provider.get_dataset('haberman')
 	.then(process_dataset('haberman'));
+
+data_provider.get_dataset('wine')
+	.then(process_dataset('wine'));
