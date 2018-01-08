@@ -1,74 +1,95 @@
-const decision_tree = require('./decision_tree');
-
-var dataset = [
-	{ A: 1, B: 1, C: 1, target: 1, },
-	{ A: 1, B: 1, C: 2, target: 0, },
-	{ A: 1, B: 2, C: 1, target: 0, },
-	{ A: 1, B: 2, C: 2, target: 0, },
-	{ A: 1, B: 2, C: 2, target: 0, },
-	{ A: 2, B: 1, C: 1, target: 0, },
-	{ A: 2, B: 1, C: 1, target: 0, },
-	{ A: 2, B: 1, C: 3, target: 1, },
-	{ A: 2, B: 2, C: 3, target: 1, },
-	{ A: 2, B: 2, C: 3, target: 1, },
-];
-var num_attributes = 2; // select 2 out 3
-var ntree = 10;
-
-function build(ntree, instances, attributes_to_select) {
-	console.log('ntree', ntree, 'attributes_to_select', attributes_to_select);
-
-	let attribute_list = get_attribute_list(instances);
-
-	let forests = [];
-	for(let i = 0; i < ntree; i++) {
-		let selected_attributes = random_select(attribute_list, attributes_to_select);
-		console.log(i, 'selected_attributes:', selected_attributes);
-		forests.push(decision_tree.build(instances, selected_attributes));
-	}
-	console.log('----------------------------------')
-	for(tree of forests) {
-		let output = decision_tree.print(tree, "\t");
-		console.log(output)		
+/* A partir de um conjunto de instâncias, da quantidade de
+ * parâmetros que devem ser selecionados para cada árvore
+ * gera uma floresta de árvores de tamanho ntree.
+ * Fornece método 'evaluate' para avaliar uma nova instância
+ * para uma floresta aleatória.
+ * */
+module.exports = (function(){
+	const decision_tree = require('./decision_tree');
+	var enable_debug = false; // Mostra todas as árvores geradas
+	
+	return {
+		build: build,
+		evaluate: evaluate,
+		set_debug: set_debug,
 	}
 
-	return forests;
+	/////
 
-}
+	function build(ntree, instances) {
+		let attribute_list = get_attribute_list(instances);
 
-/* Monta lista com os atributos que ocorrem em pelo
- * menos uma instância | TODO: função duplicada em decision_tree */
-function get_attribute_list(data) {
-	let attrs = [];
-	for(let i = 0; i < data.length; i++) {
-		for(let attr in data[i]) {
-			if(attr !== 'target' && data[i].hasOwnProperty(attr)){
-				if(attrs.indexOf(attr) === -1) {
-					attrs.push(attr);
-				}
-			}
-		} 
-	}
-	return attrs;
-}
-
-function random_select(attribute_list, attributes_to_select) {
-	var to_remove_count = attribute_list.length - attributes_to_select;
-	var to_remove_list = [];
-	// Stupid thing... but...
-	while(to_remove_list.length < to_remove_count) { // Complexidade cresce exponencialmente com o tamaho do array (TODO)
-		let random = Math.floor(Math.random() * attribute_list.length);
-		let selected = attribute_list[random];
-		if(to_remove_list.indexOf(selected) === -1) {
-			to_remove_list.push(selected);
+		let forests = [];
+		for(let i = 0; i < ntree; i++) {
+			let selected_attributes = random_select(attribute_list);
+			forests.push(decision_tree.build(instances, selected_attributes));	
 		}
+
+		if(enable_debug) {
+			for(tree of forests) {
+				let output = decision_tree.print(tree, "\t");
+				console.log(output)		
+			}
+		}
+
+		return forests;
 	}
-	return attribute_list.filter((i) => {
-		return to_remove_list.indexOf(i) === -1;
-	});
-}
 
+	/* Monta lista com os atributos que ocorrem em pelo
+	 * menos uma instância | TODO: função duplicada em decision_tree */
+	function get_attribute_list(data) {
+		let attrs = [];
+		for(let i = 0; i < data.length; i++) {
+			for(let attr in data[i]) {
+				if(attr !== 'target' && data[i].hasOwnProperty(attr)){
+					if(attrs.indexOf(attr) === -1) {
+						attrs.push(attr);
+					}
+				}
+			} 
+		}
+		return attrs;
+	}
 
+	function random_select(attribute_list) {
+		var attributes_to_select = Math.round(Math.sqrt(attribute_list.length));
+		var to_remove_count = attribute_list.length - attributes_to_select;
+		var to_remove_list = [];
+		// TODO: refatorar!!
+		while(to_remove_list.length < to_remove_count) { // Complexidade cresce exponencialmente com o tamaho do array (TODO)
+			let random = Math.floor(Math.random() * attribute_list.length);
+			let selected = attribute_list[random];
+			if(to_remove_list.indexOf(selected) === -1) {
+				to_remove_list.push(selected);
+			}
+		}
+		return attribute_list.filter((i) => {
+			return to_remove_list.indexOf(i) === -1;
+		});
+	}
 
+	function set_debug(bool) {
+		enable_debug = bool;
+	}
 
-build(ntree, dataset, num_attributes)
+	function evaluate(forest, instance) {
+		let class_count = {};
+		for(let tree of forest) {
+			let result_class = decision_tree.evaluate(tree, instance);
+			if(class_count[result_class] === undefined) {
+				class_count[result_class] = 0;
+			}
+			class_count[result_class]++;
+		}
+
+		let class_max = null;
+		for(let i in class_count) {
+			if(!class_max || class_count[i] > class_count[class_max]) {
+				class_max = i;
+			}
+		}
+
+		return class_max;
+	}
+
+})()
