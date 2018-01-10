@@ -10,24 +10,20 @@ const random_forest = require('./src/random_forest'),
 
 // random_forest.set_debug(true); // Mostra cada uma das árvores geradas
 
-// var ntrees_values = [1, 3, 7, 15, 31, 63, 127, 255, 511, 1023, 5000];
-// var ntrees_values = [1, 3, 7, 15, 31, 63];
-var ntrees_values = [1, 3, 5];
-
-process_dataset('haberman')
-// process_dataset('wine')
-// process_dataset('cmc')
-// process_dataset('wpbc')
+// process_dataset('haberman', [1, 3, 7, 15, 17, 19, 27, 29, 31, 39, 41, 43, 127])
+process_dataset('wine', [1, 3, 5, 7, 9, 11, 13, 15])
+// process_dataset('cmc', 		[1, 3, 7])
+// process_dataset('wpbc', 	[1, 3, 7, 15, 31, 63])
 
 ////
 
-function process_dataset(dataset_alias) {
+function process_dataset(dataset_alias, ntrees_values) {
 	return data_provider.get_dataset(dataset_alias)
 		.then(function(instances) {
 			let data = random_split(instances);
 			print_header(dataset_alias, instances, data);
 
-			let best_ntree = cross_validation(data);
+			let best_ntree = cross_validation(data, ntrees_values);
 			print_best_ntree(best_ntree);
 
 			// Gera modelo com melhor ntree avaliado
@@ -48,8 +44,7 @@ function process_dataset(dataset_alias) {
 }
 
 
-function cross_validation(data) {
-	// leave-one-out cross-validation
+function cross_validation(data, ntrees_values) {
 	let best_ntree = null;
 	for(let ntree of ntrees_values) {
 		let count = 0; // Predições corretas
@@ -58,6 +53,7 @@ function cross_validation(data) {
 		let train_length = data.train.length;
 		let unit = Math.round((train_length/100) * 13);
 		
+		// leave-one-out cross-validation
 		for(let i in data.train) {
 			let one_out = copy_with_one_out(data.train, i);
 			let forest = random_forest.build(ntree, data.train);

@@ -531,5 +531,4 @@ module.exports = (function(){
 		return instances;
 	}
 
-
 })();

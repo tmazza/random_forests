@@ -1,0 +1,14 @@
+#### Necessário
+npm - https://www.npmjs.com/
+node.js - https://nodejs.org/en/
+
+#### Para instalar os pacotes necessários
+npm install
+
+#### Executar um arquivo
+node <filename>
+
+Arquivos executáveis
+	- main.js - processamento com florestas aleatórias de todos os arquivo .data no diretório ./data u
+	- dados_benchmark.js - Geração de uma árvore com dados fornecidos para benchmark
+	- basic_input_test.js - Geração de uma árvore com dados para debug
